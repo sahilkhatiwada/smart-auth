@@ -1,0 +1,1 @@
+// Entry point for smart-auth package 
