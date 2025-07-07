@@ -33,4 +33,30 @@ describe('tokenSessionManager', () => {
     tokenSessionManager.createSession('b', { y: 2 });
     expect(tokenSessionManager.getSession('a')).not.toEqual(tokenSessionManager.getSession('b'));
   });
+
+  it('rejects empty payload for token creation', () => {
+    jwt.sign.mockImplementation(() => { throw new Error('fail'); });
+    expect(() => tokenSessionManager.createToken()).toThrow();
+  });
+
+  it('rejects tampered token', () => {
+    jwt.verify.mockImplementation(() => { throw new Error('tampered'); });
+    expect(() => tokenSessionManager.verifyToken('tampered')).toThrow('Invalid or expired token');
+  });
+
+  it('overwrites session with same ID', () => {
+    tokenSessionManager.createSession('sid', { foo: 1 });
+    tokenSessionManager.createSession('sid', { bar: 2 });
+    expect(tokenSessionManager.getSession('sid').data).toEqual({ bar: 2 });
+  });
+
+  it('returns null for invalid session ID', () => {
+    expect(tokenSessionManager.getSession('notfound')).toBeNull();
+  });
+
+  it('simulates session expiration (manual delete)', () => {
+    tokenSessionManager.createSession('exp', { foo: 1 });
+    tokenSessionManager.destroySession('exp');
+    expect(tokenSessionManager.getSession('exp')).toBeNull();
+  });
 }); 

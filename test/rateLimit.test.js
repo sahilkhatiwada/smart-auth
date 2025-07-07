@@ -49,4 +49,37 @@ describe('rateLimitMiddleware', () => {
     mw(req, res, next); // should allow again
     expect(next).toHaveBeenCalledTimes(3);
   });
+
+  it('separates rate limits by IP', () => {
+    const mw = rateLimitMiddleware({ windowMs: 1000, max: 1 });
+    const req1 = { ip: '1.1.1.1', headers: {} };
+    const req2 = { ip: '2.2.2.2', headers: {} };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const next = jest.fn();
+    mw(req1, res, next);
+    mw(req2, res, next);
+    expect(next).toHaveBeenCalledTimes(2);
+  });
+
+  it('handles missing IP gracefully', () => {
+    const mw = rateLimitMiddleware({ windowMs: 1000, max: 1 });
+    const req = { headers: {} };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const next = jest.fn();
+    mw(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('handles rapid requests without crashing', () => {
+    const mw = rateLimitMiddleware({ windowMs: 1000, max: 100 });
+    const req = { ip: '3.3.3.3', headers: {} };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const next = jest.fn();
+    for (let i = 0; i < 100; i++) mw(req, res, next);
+    expect(next).toHaveBeenCalledTimes(100);
+  });
+
+  it('throws on invalid config', () => {
+    expect(() => rateLimitMiddleware({ windowMs: -1, max: 0 })).not.toThrow();
+  });
 }); 

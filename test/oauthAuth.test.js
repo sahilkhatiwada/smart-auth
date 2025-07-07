@@ -32,4 +32,17 @@ describe('oauthAuth', () => {
     expect(typeof mw1).toBe('function');
     expect(typeof mw2).toBe('function');
   });
+
+  it('does not call passport.use if no config is provided', () => {
+    passport.use.mockClear();
+    oauthAuth.setupOAuth({});
+    expect(passport.use).not.toHaveBeenCalled();
+  });
+
+  it('authenticateOAuth and callbackOAuth handle unknown provider', () => {
+    const mw1 = oauthAuth.authenticateOAuth('unknown');
+    const mw2 = oauthAuth.callbackOAuth('unknown');
+    expect(typeof mw1).toBe('function');
+    expect(typeof mw2).toBe('function');
+  });
 }); 
